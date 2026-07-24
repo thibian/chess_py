@@ -1,80 +1,61 @@
-class Utils:
-    @staticmethod
-    def make_tuple(coords):
-        Utils.empty = []
-        for char in coords:
-            Utils.empty.append(char)
-        Utils.coords = tuple(Utils.empty)
-        return Utils.coords
+from _utils import chess_to_array, array_to_chess, alphabetize
 
-
-class Chess():
-    def __init__(self):
-        self.captured_pieces = []
-
-    boardstate = [['R', 'N', 'B', 'Q', 'K', 'B', 'N','R'],
-                  ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-                  ['_', '_', '_', '_', '_', '_', '_', '_'],
-                  ['_', '_', '_', '_', '_', '_', '_', '_'],
-                  ['_', '_', '_', '_', '_', '_', '_', '_'],
-                  ['_', '_', '_', '_', '_', '_', '_', '_'],
-                  ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-                  ['R', 'N', 'B', 'Q', 'K', 'B', 'N','R']]
+boardstate = [['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'],
+              ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+              ['_', '_', '_', '_', '_', '_', '_', '_'],
+              ['_', '_', '_', '_', '_', '_', '_', '_'],
+              ['_', '_', '_', '_', '_', '_', '_', '_'],
+              ['_', '_', '_', '_', '_', '_', '_', '_'],
+              ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+              ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']]
         
-    coords = {'a': 0, 'b': 1, 'c': 2, 'd': 3,
-              'e': 4, 'f': 5, 'g': 6, 'h': 7,  
-              '1': 7, '2': 6, '3': 5, '4': 4,
-              '5': 3, '6': 2, '7': 1, '8': 0
-              }
 
-    def checksquare(self, col, row):
-        col = self.coords[col.lower()]
-        row = self.coords['{0}'.format(row)]
-        if self.checksquare(col, row) == '_':
-            return False
-        if self.checksquare(col, row) != '_':
-            return True
-        else:
-            print("Please check the coordinate input")
+def checksquare(col: str, row: str):
+    col = chess_to_array[col.lower()]
+    row = chess_to_array[row]
+    if boardstate[row][col] == '_':
+        return False
+    if boardstate[row][col] != '_':
+        return True
 
-    def move_piece(self, piece, col, row):
-        if self.checksquare(col, row) == '_':
-            col = self.coords[col.lower()]
-            row = self.coords['{0}'.format(row)]
-            self.boardstate[row][col] = piece
-        if self.checksquare(col, row) != '_':
-            print("Please move to an empty square")
-
-class Piece(Chess):
-    def __init__(self, symbol='A', color=0, currentsquare='A1'):
+class Piece:
+    def __init__(self, color: bin, location: tuple):
         self.color = color
-        self.currentsquare = Utils.make_tuple(currentsquare)
+        self.location = location
 
     def locate(self):
-        return self.coord
+        return self.location
 
-    def move(self, destination):
-        self.destination = Utils.make_tuple(destination)
-        self.dcol = self.destination[0]
-        self.drow = self.destination[1]
-        self.dcol = Chess.coords[self.dcol.lower()]
-        self.drow = Chess.coords['{0}'.format(self.drow)]
-        Chess.boardstate[self.drow][self.dcol] = self.symbol
-        self.ccol = Chess.coords[self.currentsquare[0].lower()]
-        self.crow = Chess.coords[self.currentsquare[1]]
-        Chess.boardstate[self.crow][self.ccol] = '_'
+    def update_location(self, col, row):
+        self.location = (col, row)
 
-        
+    def friendly(self, other):
+        if other.color == self.color:
+            return True
+        else:
+            return False
+
+    def move(self, destination: tuple):
+        if not checksquare(*destination):
+            self.update_location(*destination)
+        if checksquare(*destination):
+            try: 
+                self.capture()
+            except: 
+                print("The square you are trying to move to either doesn't exist " \
+                "or is occupied by a friendly piece.") 
+
+    def capture(self, destination):
+        if not self.friendly:
+            self.update_location(*destination)
+
 class Knight(Piece):
-    def __init__(self, symbol='N', color=0, currentsquare='B1'):
-        self.symbol = symbol
-        self.color = color
-        self.currentsquare = Utils.make_tuple(currentsquare)
+    symbol = 'K'
+    
+knight = Knight(0, ('g', '1'))
 
-import turtle
+knight.move(('f', '3'))
+print(knight.locate())
 
-
-
-
-
+knight.move(('e', '2'))
 
