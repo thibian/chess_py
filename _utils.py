@@ -1,3 +1,5 @@
+import string
+
 def make_tuple(coords):
         temp = []
         for char in coords:
@@ -5,18 +7,14 @@ def make_tuple(coords):
         coords = tuple(temp)
         return coords
 
-chess_to_array = {'a': 0, 'b': 1, 'c': 2, 'd': 3,
-                  'e': 4, 'f': 5, 'g': 6, 'h': 7,  
-                  '1': 7, '2': 6, '3': 5, '4': 4,
-                  '5': 3, '6': 2, '7': 1, '8': 0   
-                 }
+keys = []
+for x in range(1, 9):
+      for y in string.ascii_lowercase[0: 8]:
+            fusion = y + str(x)
+            keys.append(fusion)
 
-array_to_chess = {
-                  0: 8, 1: 7, 2: 6, 3: 5, 4: 4,
-                  5: 3, 6: 2, 7: 1
-                 }
+nums = list(range(64))
 
-alphabetize = {
-               1: 'a', 2: 'b', 3: 'c', 4: 'd',
-               5: 'e', 6: 'f', 7: 'g', 8: 'h'
-               }
+chessToArray = dict(zip(keys, nums))
+arrayToChess = dict(zip(nums, keys))
+
