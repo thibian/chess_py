@@ -1,14 +1,11 @@
-import _utils
-from _utils import chessToArray, arrayToChess
+import string
 
-board = ['r01', 'n01', 'b01', 'q0', 'k0', 'b02', 'n02', 'r02', 
-         'p01', 'p02', 'p03', 'p04', 'p05', 'p06', 'p07', 'p08', 
-         'v', 'v', 'v', 'v', 'v', 'v', 'v', 'v', 
-         'v', 'v', 'v', 'v', 'v', 'v', 'v', 'v', 
-         'v', 'v', 'v', 'v', 'v', 'v', 'v', 'v', 
-         'v', 'v', 'v', 'v', 'v', 'v', 'v', 'v', 
-         'p18', 'p17', 'p16', 'p15', 'p14', 'p13', 'p12', 'p11', 
-         'r12', 'n12', 'b12', 'q1', 'k1', 'b11', 'n11', 'r11']
+files = 'abcdefgh'
+ranks = '12345678'
+squares = [f + r for r in ranks for f in files]
+
+chessToArray = dict(zip(squares, range(64)))
+arrayToChess = dict(zip(range(64), squares))
 
 visual = [
     'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R',
@@ -21,141 +18,153 @@ visual = [
     'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R',
 ]
 
-
-def squareempty(sq="a1"):
-    if board[chessToArray[sq]] == 'v':
-        return True
-    if board[chessToArray[sq]] != 'v':
-        return False
-
-
 class Piece:
-    def __init__(self, color: bin, location: str, name: str):
-        self.clr = color
-        self. name = name
+    symbol = '?' #override during subclass creation
+
+    def __init__(self, color: bin, location: str):
+        self.clr = color #0 == white, 1 == black
         self.loc = location
-        self._loc = chessToArray[location]
+        self.has_moved = False
+
+    def __repr__(self):
+        return f'{type(self).__name__}({self.clr}, {self.loc!r})'
+
+    @property
+    def display_symbol(self):
+        return self.symbol if self.clr == 0 else self.symbol.lower()
 
     def locate(self):
         return self.loc
 
-    def loc_upd(self, square):
-        self.loc = square
-        self._loc = (chessToArray[square])
-        visual_upd()
-        printBoard()
-
     def friendly(self, other):
-        other = eval(other)
-        if other.clr == self.clr:
-            return True
-        else:
-            return False
+        return other is not None and other.clr == self.clr
 
-    def move(self, sq: str):
-        if squareempty(sq):
-            board[self._loc], board[chessToArray[sq]] = 'v', self.name
-            self.loc_upd(sq)
-        elif not squareempty(sq):
-            self.capture(sq)
+    def getmoves(self, board):
+        """Return a list of legal destination squares."""
+        raise NotImplementedError
 
-    def capture(self, sq):
-        if not self.friendly(board[chessToArray[sq]]):
-            board[self._loc], board[chessToArray[sq]] = 'v', self.name
-            self.loc_upd(sq)
-        elif self.friendly(board[chessToArray[sq]]):
+    def move(self, sq: str, board):
+        target = board.get(sq)
+        if target is not None and self.friendly(target):
             return "You cannot capture your own pieces"
+        if sq in self.getmoves(board):
+            del board[self.loc]
+            board[sq] = self
+            self.loc = sq
+            self.has_moved = True
+            visual_upd(board)
+            printBoard()
         else:
-            return "Please enter a valid target square"
-
-    def iscaptured(self):
-        if board[self._loc] == str(self):
-            return False
-        else:
-            return True
+            print("Has to be a legal square")
 
 class King(Piece):
     symbol = 'K'
+    def getmoves(self, board):
+        pass
 
 class Queen(Piece):
     symbol = 'Q'
+    def getmoves(self, board):
+        pass
 
 class Bishop(Piece):
     symbol = 'B'
+    def getmoves(self, board):
+        legalmvs = []
+        lusq = []
+        ldsq = []
+        rusq = []
+        rdsq = []
+        i = files.index(self.loc[0])
+        j = ranks.index(self.loc[1])
+        for offset in range(-1, -i - 1, -1):
+            if -1 < j + offset < 8:
+                ldsq.append(f'{files[i + offset]}{j + offset + 1}')
+            if 0 < j - offset < 8:
+                lusq.append(f'{files[i + offset]}{j - offset + 1}')
+        for offset in range(1, 8 - i):
+            if 0 < j - offset < 8:
+                rdsq.append(f'{files[i + offset]}{j + offset + 1}')
+            if j + offset < 9:
+                rusq.append(f'{files[i + offset]}{j - offset + 1}')
+        for sq in ldsq:
+            if board.get(sq) is None:
+                legalmvs.append(sq)
+            else:
+                if not self.friendly(board[sq]):
+                    legalmvs.append(sq)
+                else:
+                     break
+        for sq in lusq:
+            if board.get(sq) is None:
+                legalmvs.append(sq)
+            else:
+                if not self.friendly(board[sq]):
+                    legalmvs.append(sq)
+                else:
+                        break
+        for sq in rdsq:
+            if board.get(sq) is None:
+                legalmvs.append(sq)
+            else:
+                if not self.friendly(board[sq]):
+                    legalmvs.append(sq)
+                else:
+                        break
+        for sq in rusq:
+            if board.get(sq) is None:
+                legalmvs.append(sq)
+            else:
+                if not self.friendly(board[sq]):
+                    legalmvs.append(sq)
+                else:
+                        break
+        return legalmvs
 
 class Knight(Piece):
     symbol = 'N'
-
+    def getmoves(self, board):
+        arraymoves = (-17, -15, -10, -6, 6, 10, 15, 17)
+        legalmvs = []
+        locindex = chessToArray[self.loc]
+        for i in arraymoves:
+            if locindex + i in range(64) and not self.friendly(board.get(arrayToChess[locindex + i])):
+                legalmvs.append(arrayToChess[locindex + i])
+        return legalmvs
+            
 class Rook(Piece):
     symbol = 'R'
+    def getmoves(self, board):
+            pass
 
 class Pawn(Piece):
     symbol = 'P'
+    def getmoves(self, board):
+        return squares
 
-k0 = King(0, 'e1', 'k0')
-k1 = King(1, 'e8', 'k1')
+CLASS_MAP = {'r': Rook, 'n': Knight, 'b': Bishop, 'q': Queen, 'k': King, 'p': Pawn}
+BACK_RANK = ('r', 'n', 'b', 'q', 'k', 'b', 'n', 'r')
 
-q0 = Queen(0, 'd1', 'q0')
-q1 = Queen(1, 'd8', 'q1')
+def make_pieces():
+    pieces = []
+    for clr, rank in [(0, 1), ('1', '8')]:
+        for file, letter in zip(files, BACK_RANK):
+            cls = CLASS_MAP[letter]
+            pieces.append(cls(clr, str(file) + str(rank)))
+        pawn_rank = '2' if clr == 0 else '7'
+        for file in files:
+            pieces.append(Pawn(clr, file + pawn_rank))
+    return pieces
 
-r01 = Rook(0, 'a1', 'r01')
-r02 = Rook(0, 'h1', 'r02')
-r11 = Rook(1, 'h8', 'r11')
-r12 = Rook(1, 'a8', 'r12')
+pieces = make_pieces()
+board = {p.loc: p for p in pieces}
 
-n01 = Knight(0, 'b1', 'n01')
-n02 = Knight(0, 'g1', 'n02')
-n11 = Knight(1, 'g8', 'n11')
-n12 = Knight(1, 'b8', 'n12')
 
-b01 = Bishop(0, 'c1', 'b01')
-b02 = Bishop(0, 'f1', 'b02')
-b11 = Bishop(1, 'f8', 'b11')
-b12 = Bishop(1, 'c8', 'b12')
+visual = ['-'] * 64
 
-p01 = Pawn(0, 'a2', '')
-p02 = Pawn(0, 'b2', '')
-p03 = Pawn(0, 'c2', '')
-p04 = Pawn(0, 'd2', '')
-p05 = Pawn(0, 'e2', '')
-p06 = Pawn(0, 'f2', '')
-p07 = Pawn(0, 'g2', '')
-p08 = Pawn(0, 'h2', '')
-
-p18 = Pawn(1, 'a7', '')
-p17 = Pawn(1, 'b7', '')
-p16 = Pawn(1, 'c7', '')
-p15 = Pawn(1, 'd7', '')
-p14 = Pawn(1, 'e7', '')
-p13 = Pawn(1, 'f7', '')
-p12 = Pawn(1, 'g7', '')
-p11 = Pawn(1, 'h7', '')
-
-piecenames = [
-      'r01', 'n01', 'b01', 'q0', 'k0', 'b02', 'n02', 'r02', 
-      'p01', 'p02', 'p03', 'p04', 'p05', 'p06', 'p07', 'p08', 
-      'p18', 'p17', 'p16', 'p15', 'p14', 'p13', 'p12', 'p11', 
-      'r12', 'n12', 'b12', 'q1', 'k1', 'b11', 'n11', 'r11',
-      ]
-
-pieces = [
-    r01, n01, b01, q0, k0, b02, n02, r02, 
-    p01, p02, p03, p04, p05, p06, p07, p08, 
-    p18, p17, p16, p15, p14, p13, p12, p11, 
-    r12, n12, b12, q1, k1, b11, n11, r11,
-]
-
-convert = dict(zip(piecenames, pieces))
-for name, piece in zip(piecenames, pieces):
-    piece.name = name
-
-def visual_upd():
-    for i, key in enumerate(board):
-        if key == 'v':
-            visual[i] = '-'
-            continue
-        name = convert[key]
-        visual[i] = name.symbol
+def visual_upd(board):
+    for sq in squares:
+        visual[chessToArray[sq]] = board[sq].display_symbol if sq in board else '-'
 
 def printBoard():
     x = 56    
@@ -168,10 +177,16 @@ def printBoard():
             print("")
             break
 
-printBoard()
-p05.move('e4')
-p15.move('d5')
-p05.move('d5')
+
+# --------- Testing ------------
+
+print(board['c1'].getmoves(board))
+
+board['b2'].move('b4', board)
+print(board['c1'].getmoves(board))
+board['c1'].move('b2', board)
+print(board['b2'].getmoves(board))
+
 
 
 

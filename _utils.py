@@ -7,14 +7,10 @@ def make_tuple(coords):
         coords = tuple(temp)
         return coords
 
-keys = []
-for x in range(1, 9):
-      for y in string.ascii_lowercase[0: 8]:
-            fusion = y + str(x)
-            keys.append(fusion)
+files = 'abcdefgh'
+ranks = '12345678'
+squares = [f + r for r in ranks for f in files]
 
-nums = list(range(64))
-
-chessToArray = dict(zip(keys, nums))
-arrayToChess = dict(zip(nums, keys))
+chessToArray = dict(zip(squares, range(64)))
+arrayToChess = dict(zip(range(64), squares))
 
