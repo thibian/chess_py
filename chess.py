@@ -70,56 +70,18 @@ class Queen(Piece):
 class Bishop(Piece):
     symbol = 'B'
     def getmoves(self, board):
+        moves = []
         legalmvs = []
-        lusq = []
-        ldsq = []
-        rusq = []
-        rdsq = []
-        i = files.index(self.loc[0])
-        j = ranks.index(self.loc[1])
-        for offset in range(-1, -i - 1, -1):
-            if -1 < j + offset < 8:
-                ldsq.append(f'{files[i + offset]}{j + offset + 1}')
-            if 0 < j - offset < 8:
-                lusq.append(f'{files[i + offset]}{j - offset + 1}')
-        for offset in range(1, 8 - i):
-            if 0 < j - offset < 8:
-                rdsq.append(f'{files[i + offset]}{j + offset + 1}')
-            if j + offset < 9:
-                rusq.append(f'{files[i + offset]}{j - offset + 1}')
-        for sq in ldsq:
-            if board.get(sq) is None:
-                legalmvs.append(sq)
-            else:
-                if not self.friendly(board[sq]):
-                    legalmvs.append(sq)
-                else:
-                     break
-        for sq in lusq:
-            if board.get(sq) is None:
-                legalmvs.append(sq)
-            else:
-                if not self.friendly(board[sq]):
-                    legalmvs.append(sq)
-                else:
-                        break
-        for sq in rdsq:
-            if board.get(sq) is None:
-                legalmvs.append(sq)
-            else:
-                if not self.friendly(board[sq]):
-                    legalmvs.append(sq)
-                else:
-                        break
-        for sq in rusq:
-            if board.get(sq) is None:
-                legalmvs.append(sq)
-            else:
-                if not self.friendly(board[sq]):
-                    legalmvs.append(sq)
-                else:
-                        break
-        return legalmvs
+        file = files.index(self.loc[0])
+        rank = ranks.index(self.loc[1])
+        min, max = file, rank
+        if rank < file:
+            min, max = rank, file
+        for i in range(-min, 8 - max ):
+            moves.append(f'{files[file + i]}{ranks[rank + i]}')
+        
+
+   
 
 class Knight(Piece):
     symbol = 'N'
@@ -179,13 +141,12 @@ def printBoard():
 
 
 # --------- Testing ------------
-
+print(board['c1'].loc)
 print(board['c1'].getmoves(board))
-
 board['b2'].move('b4', board)
 print(board['c1'].getmoves(board))
 board['c1'].move('b2', board)
-print(board['b2'].getmoves(board))
+
 
 
 
